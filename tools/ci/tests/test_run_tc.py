@@ -2,7 +2,7 @@ import pytest
 
 from six import iteritems
 
-from tools.ci import run_tc
+from tools.ci import decision
 
 
 @pytest.mark.parametrize("msg,expected", [
@@ -30,4 +30,4 @@ def test_extra_jobs_pr(msg, expected, event):
 
     event = sub(event)
 
-    assert run_tc.get_extra_jobs(event) == expected
+    assert decision.get_extra_jobs(event) == expected

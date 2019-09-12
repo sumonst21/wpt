@@ -24,5 +24,27 @@
       "requests",
       "pygithub"
     ]
+  },
+  "taskgraph": {
+    "path": "taskgraph.py",
+    "script": "run",
+    "help": "Build the taskgraph",
+    "virtualenv": true,
+    "install": [
+      "requests",
+      "pyyaml"
+    ]
+  },
+  "decision": {
+    "path": "decision.py",
+    "parser": "get_parser",
+    "script": "run",
+    "help": "Run the decision task",
+    "virtualenv": true,
+    "install": [
+        "requests",
+        "pyyaml",
+        "taskcluster"
+    ]
   }
 }
