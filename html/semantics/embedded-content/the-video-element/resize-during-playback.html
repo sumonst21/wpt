@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<head>
+<title>video element resizing during playback</title>
+<link rel="help" href="https://html.spec.whatwg.org/multipage/media.html#concept-video-intrinsic-width">
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+</head>
+<body>
+<div id="log"></div>
+<script>
+setup(() => {
+  let anyFormatSupported = false;
+  for (const format of ['mp4', 'webm']) {
+    const video = document.createElement('video');
+    // TODO: skip subtests after https://github.com/web-platform-tests/rfcs/pull/16
+    if (video.canPlayType(`video/${format}`)) {
+      anyFormatSupported = true;
+      promise_test(async (t) => {
+        // Load the video and wait for initial resize event.
+        video.src = `/media/400x300-red-resize-300x150-green.${format}`;
+        video.preload = 'auto';
+        document.body.appendChild(video);
+        const eventWatcher = new EventWatcher(t, video, ['resize', 'playing', 'error', 'ended']);
+        await eventWatcher.wait_for(['resize']);
+        assert_equals(video.videoWidth, 400, 'width after first resize event');
+        assert_equals(video.videoHeight, 300, 'height after first resize event');
+
+        // Now play and wait for a second resize event.
+        const playPromise = video.play();
+        if (playPromise) {
+          playPromise.catch(t.unreached_func("play rejected"));
+        }
+        await eventWatcher.wait_for(['playing', 'resize']);
+        assert_equals(video.videoWidth, 300, 'width after second resize event');
+        assert_equals(video.videoHeight, 150, 'height after second resize event');
+      }, `${format} video`);
+    }
+  }
+  if (!anyFormatSupported) {
+    throw new Error('No supported video format for this test');
+  }
+});
+</script>
+</body>
+</html>
