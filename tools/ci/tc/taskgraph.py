@@ -22,11 +22,13 @@ def update_recursive(data, update_data):
             initial_value = data[key]
             if isinstance(value, dict):
                 if not isinstance(initial_value, dict):
-                    raise ValueError
+                    raise ValueError("Variable %s has inconsistent types "
+                                     "(expected object)" % key)
                 update_recursive(initial_value, value)
             elif isinstance(value, list):
                 if not isinstance(initial_value, list):
-                    raise ValueError
+                    raise ValueError("Variable %s has inconsistent types "
+                                     "(expected list)" % key)
                 initial_value.extend(value)
             else:
                 data[key] = value
@@ -62,6 +64,7 @@ def resolve_chunks(task_data):
 
 
 def replace_vars(input_string, variables):
+    # TODO: support replacing as a non-string type?
     variable_re = re.compile(r"(?<!\\)\${([^}]+)}")
 
     def replacer(m):
@@ -102,7 +105,10 @@ def expand_maps(task):
         return [task]
 
     map_data = task["$map"]
-    assert set(map_data.keys()) == set(["for", "do"])
+    if set(map_data.keys()) != set(["for", "do"]):
+        raise ValueError("$map objects must have exactly two properties named 'for' "
+                         "and 'do' (got %s)" % ("no properties" if not map_data.keys()
+                                                else ", ". join(map_data.keys())))
     rv = []
     for for_data in map_data["for"]:
         do_items = map_data["do"]
@@ -110,7 +116,9 @@ def expand_maps(task):
             do_items = expand_maps(do_items)
         for do_data in do_items:
             task_data = deepcopy(for_data)
-            assert len(do_data.keys()) == 1
+            if len(do_data.keys()) != 1:
+                raise ValueError("Each item in the 'do' list must be an object "
+                                 "with a single property")
             name = do_data.keys()[0]
             update_recursive(task_data, deepcopy(do_data[name]))
             rv.append({name: task_data})
@@ -122,9 +130,11 @@ def load_tasks(tasks_data):
     tasks = []
 
     for task in tasks_data["tasks"]:
-        assert len(task.keys()) == 1
+        if len(task.keys()) != 1:
+            raise ValueError("Each task must be an object with a single property")
         for task in expand_maps(task):
-            assert len(task.keys()) == 1
+            if len(task.keys()) != 1:
+                raise ValueError("Each task must be an object with a single property")
             name = task.keys()[0]
             data = task[name]
             new_name = sub_variables(name, {"vars": data.get("vars", {})})
