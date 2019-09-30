@@ -64,7 +64,7 @@ def filter_triggers(event, all_tasks):
 
 
 def get_run_jobs(event):
-    import jobs
+    from tools.ci import jobs
     revish = "%s..%s" % (event["pull_request"]["base"]["sha"]
                          if "pull_request" in event
                          else event["before"],
@@ -127,7 +127,7 @@ def get_fetch_rev(event):
         except subprocess.CalledProcessError:
             import traceback
             logger.error(traceback.format_exc())
-            logger.error("Failed to get merge commit sha2")
+            logger.error("Failed to get merge commit sha1")
             return ref
         if not output:
             logger.error("Failed to get merge commit")
@@ -248,13 +248,13 @@ def create_tasks(queue, task_id_map):
         queue.createTask(task_id, task_data)
 
 
-def get_event(queue, **kwargs):
-    if kwargs["event_path"] is not None:
+def get_event(queue, event_path):
+    if event_path is not None:
         try:
-            with open(kwargs["event_path"]) as f:
+            with open(event_path) as f:
                 event_str = f.read()
         except IOError:
-            logger.error("Missing event file at path %s" % kwargs["event_path"])
+            logger.error("Missing event file at path %s" % event_path)
             raise
     elif "TASK_EVENT" in os.environ:
         event_str = os.environ["TASK_EVENT"]
@@ -267,6 +267,17 @@ def get_event(queue, **kwargs):
     except ValueError:
         logger.error("Event was not valid JSON")
         raise
+
+
+def decide(event):
+    print(here)
+    all_tasks = taskgraph.load_tasks_from_path(os.path.join(here, "tasks", "test.yml"))
+
+    triggered_tasks = filter_triggers(event, all_tasks)
+    scheduled_tasks = filter_schedule_if(event, triggered_tasks)
+
+    task_id_map = build_task_graph(event, all_tasks, scheduled_tasks)
+    return task_id_map
 
 
 def get_parser():
@@ -283,15 +294,9 @@ def get_parser():
 
 def run(venv, **kwargs):
     queue = taskcluster.Queue({'rootUrl': os.environ['TASKCLUSTER_PROXY_URL']})
+    event = get_event(queue, event_path=kwargs["event_path"])
 
-    event = get_event(queue, **kwargs)
-
-    all_tasks = taskgraph.load_tasks_from_path(os.path.join(here, "tasks/test.yml"))
-
-    triggered_tasks = filter_triggers(event, all_tasks)
-    scheduled_tasks = filter_schedule_if(event, triggered_tasks)
-
-    task_id_map = build_task_graph(event, all_tasks, scheduled_tasks)
+    task_id_map = decide(event)
 
     try:
         if not kwargs["dry_run"]:

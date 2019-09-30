@@ -146,4 +146,4 @@ def load_tasks_from_path(path):
 
 
 def run(venv, **kwargs):
-    print(json.dumps(load_tasks_from_path(os.path.join(here, "tasks/test.yml")), indent=2))
+    print(json.dumps(load_tasks_from_path(os.path.join(here, "tasks", "test.yml")), indent=2))
