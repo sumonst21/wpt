@@ -2,7 +2,7 @@ import pytest
 
 from six import iteritems
 
-from tools.ci import decision
+from tools.ci.tc import decision
 
 
 @pytest.mark.parametrize("msg,expected", [
