@@ -128,26 +128,29 @@ def get_fetch_rev(event):
             import traceback
             logger.error(traceback.format_exc())
             logger.error("Failed to get merge commit sha1")
-            return ref
+            return ref, None
         if not output:
             logger.error("Failed to get merge commit")
-            return ref
-        return output.split()[0]
+            return ref, None
+        return ref, output.split()[0]
     else:
-        return event["after"]
+        return event["ref"], event["after"]
 
 
 def build_full_command(event, task):
+    fetch_ref, fetch_rev = get_fetch_rev(event)
     cmd_args = {
         "task_name": task["name"],
         "repo_url": event["repository"]["clone_url"],
-        "fetch_rev": get_fetch_rev(event),
+        "fetch_ref": fetch_ref,
         "task_cmd": task["command"],
         "install_str": "",
     }
 
     options = task.get("options", {})
     options_args = []
+    if fetch_rev is not None:
+        options_args.append("--rev=%s" % fetch_rev)
     if options.get("oom-killer"):
         options_args.append("--oom-killer")
     if options.get("xvfb"):
@@ -182,7 +185,7 @@ def build_full_command(event, task):
             """
 ~/start.sh \
   %(repo_url)s \
-  %(fetch_rev)s;
+  %(fetch_ref)s;
 %(install_str)s
 cd web-platform-tests;
 ./tools/ci/run_tc.py %(options_str)s -- %(task_cmd)s;

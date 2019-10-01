@@ -59,7 +59,7 @@ def test_verify_payload():
         with open(data_path(filename)) as f:
             event = json.load(f)
 
-        with mock.patch("tools.ci.tc.decision.get_fetch_rev", return_value=event["after"]):
+        with mock.patch("tools.ci.tc.decision.get_fetch_rev", return_value=(event["after"], None)):
             with mock.patch("tools.ci.tc.decision.get_run_jobs", return_value=set(jobs)):
                 task_id_map = decide(event)
         for name, (task_id, task_data) in task_id_map.items():

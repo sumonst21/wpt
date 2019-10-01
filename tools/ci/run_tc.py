@@ -102,6 +102,8 @@ def get_parser():
                    help="Install web-platform.test certificates to UA store")
     p.add_argument("--no-install-certificates", action="store_false", default=None,
                    help="Install web-platform.test certificates to UA store")
+    p.add_argument("--rev",
+                   help="rev that the task_head ref is expected to point to")
     p.add_argument("script",
                    help="Script to run for the job")
     p.add_argument("script_args",
@@ -313,6 +315,13 @@ def fetch_event_data():
 
 def main():
     args = get_parser().parse_args()
+
+    if args.rev is not None:
+        task_head = subprocess.check_output(["git", "rev-parse", "task_head"]).strip()
+        if task_head != args.rev:
+            print("CRITICAL: task_head points at %s, expected %s. "
+                  "This may be because the branch was updated" % (task_head, args.rev))
+            sys.exit(1)
 
     if "TASK_EVENT" in os.environ:
         event = json.loads(os.environ["TASK_EVENT"])
