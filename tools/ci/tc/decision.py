@@ -270,7 +270,6 @@ def get_event(queue, event_path):
 
 
 def decide(event):
-    print(here)
     all_tasks = taskgraph.load_tasks_from_path(os.path.join(here, "tasks", "test.yml"))
 
     triggered_tasks = filter_triggers(event, all_tasks)
