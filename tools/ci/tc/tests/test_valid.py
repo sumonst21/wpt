@@ -67,5 +67,5 @@ def test_verify_payload():
                 validate(instance=task_data, schema=create_task_schema)
                 validate(instance=task_data["payload"], schema=payload_schema)
             except Exception as e:
-                print "Validation failed for task '%s':\n%s" % (name, json.dumps(task_data, indent=2))
+                print("Validation failed for task '%s':\n%s" % (name, json.dumps(task_data, indent=2)))
                 raise e
