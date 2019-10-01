@@ -9,6 +9,17 @@ from six import iteritems
 
 here = os.path.dirname(__file__)
 
+
+def first(iterable):
+    # First item from a list or iterator
+    if not hasattr(iterable, "next"):
+        if hasattr(iterable, "__iter__"):
+            iterable = iter(iterable)
+        else:
+            raise ValueError("Object isn't iterable")
+    return next(iterable)
+
+
 def load_task_file(path):
     with open(path) as f:
         return yaml.safe_load(f)
@@ -100,7 +111,7 @@ def substitute_variables(task):
 
 
 def expand_maps(task):
-    name = task.keys()[0]
+    name = first(task.keys())
     if name != "$map":
         return [task]
 
@@ -119,7 +130,7 @@ def expand_maps(task):
             if len(do_data.keys()) != 1:
                 raise ValueError("Each item in the 'do' list must be an object "
                                  "with a single property")
-            name = do_data.keys()[0]
+            name = first(do_data.keys())
             update_recursive(task_data, deepcopy(do_data[name]))
             rv.append({name: task_data})
     return rv
@@ -135,7 +146,7 @@ def load_tasks(tasks_data):
         for task in expand_maps(task):
             if len(task.keys()) != 1:
                 raise ValueError("Each task must be an object with a single property")
-            name = task.keys()[0]
+            name = first(task.keys())
             data = task[name]
             new_name = sub_variables(name, {"vars": data.get("vars", {})})
             if new_name in map_resolved_tasks:
