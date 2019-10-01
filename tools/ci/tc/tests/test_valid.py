@@ -5,6 +5,7 @@ import jsone
 import mock
 import pytest
 import requests
+import sys
 import yaml
 from jsonschema import validate
 
@@ -16,7 +17,8 @@ def data_path(filename):
     return os.path.join(here, "..", "testdata", filename)
 
 
-@pytest.mark.xfail(reason="taskcluster library has an encoding bug")
+@pytest.mark.xfail(sys.version_info.major == 2,
+                   reason="taskcluster library has an encoding bug")
 def test_verify_taskcluster_yml():
     """Verify that the jsone in the .taskcluster.yml is valid"""
     with open(os.path.join(root, ".taskcluster.yml")) as f:
