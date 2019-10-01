@@ -47,15 +47,21 @@ def test_verify_payload():
 
     payload_schema = requests.get("https://raw.githubusercontent.com/taskcluster/docker-worker/master/schemas/v1/payload.json").json()
 
+    jobs = ["lint",
+            "manifest_upload",
+            "resources_unittest",
+            "tools_unittest",
+            "wpt_integration",
+            "wptrunner_infrastructure",
+            "wptrunner_unittest"]
+
     for filename in ["pr_event.json", "master_push_event.json"]:
         with open(data_path(filename)) as f:
             event = json.load(f)
 
-        # Ensure we have the after commit available
-        subprocess.check_call(["git", "fetch", event["repository"]["clone_url"], event["after"]])
-
         with mock.patch("tools.ci.tc.decision.get_fetch_rev", return_value=event["after"]):
-            task_id_map = decide(event)
+            with mock.patch("tools.ci.tc.decision.get_run_jobs", return_value=set(jobs)):
+                task_id_map = decide(event)
         for name, (task_id, task_data) in task_id_map.items():
             try:
                 validate(instance=task_data, schema=create_task_schema)
