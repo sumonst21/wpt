@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Cycles without DelayNode in audio node graph</title>
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+  </head>
+  <body>
+    <script>
+      function doTest() {
+        const context = new OfflineAudioContext(1, 512, 48000);
+        let osc = new OscillatorNode(context);
+        let fb = new GainNode(context);
+        // zero delay feedback loop
+        osc.connect(fb).connect(fb).connect(context.destination);
+        osc.start(0);
+        return context.startRendering();
+      }
+
+      promise_test(() => {
+        return doTest().then(buffer => {
+          let samples = buffer.getChannelData(0);
+          var silent = true;
+          for (var i = 0; i < samples.length; i++) {
+            if (samples[i] != 0.0) {
+              silent = false;
+              break;
+            }
+          }
+          assert_true(silent);
+        });
+      }, 'Test that cycles that don\'t contain a DelayNode are muted');
+    </script>
+  </body>
+</html>
