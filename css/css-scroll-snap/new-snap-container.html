@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<title>
+  Making an element scrollable should reassign its descendant snap areas to
+  itself.
+</title>
+<link rel="help" href="https://drafts.csswg.org/css-scroll-snap/#overview"/>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<style>
+div {
+  position: absolute;
+  margin: 0px;
+}
+
+html {
+  scroll-snap-type: y mandatory;
+}
+
+body {
+  margin: 0px;
+}
+
+#outer-scroller {
+  top: 100px;
+  height: 600px;
+  width: 600px;
+  overflow: visible;
+  scroll-snap-type: y mandatory;
+}
+
+#middle-scroller {
+  top: 100px;
+  height: 500px;
+  width: 500px;
+  overflow: visible;
+  background-color: rgb(12, 61, 2);
+  scroll-snap-type: none;
+}
+
+#inner-scroller {
+  top: 100px;
+  height: 400px;
+  width: 400px;
+  overflow: visible;
+  background-color: rgb(65, 139, 50);
+  scroll-snap-type: y mandatory;
+}
+
+.space {
+  width: 2000px;
+  height: 2000px;
+}
+
+.snap-area {
+  top: 400px;
+  width: 200px;
+  height: 200px;
+  background-color: blue;
+  scroll-snap-align: start;
+}
+
+</style>
+<div class="space"></div>
+<div id="document-snap-area" class="snap-area"></div>
+<div id="outer-scroller">
+  <div class="space"></div>
+  <div id="outer-snap-area" class="snap-area"></div>
+  <div id="middle-scroller">
+    <div class="space"></div>
+    <div id="middle-snap-area" class="snap-area"></div>
+    <div id="inner-scroller">
+        <div class="space"></div>
+        <div id="inner-snap-area" class="snap-area"></div>
+    </div>
+  </div>
+</div>
+<script>
+
+// This tests that making a container scrollable will reassign the correct snap
+// areas to itself, per spec [1].
+// [1] https://drafts.csswg.org/css-scroll-snap/#overview
+test(() => {
+  const innerscroller = document.getElementById("inner-scroller");
+  const middlescroller = document.getElementById("middle-scroller");
+  const outerscroller = document.getElementById("outer-scroller");
+
+  // Confirm that the document level scroller is the snap container for all of
+  // the snap areas.
+  document.scrollingElement.scrollBy(0, 10);
+  assert_equals(document.scrollingElement.scrollTop, 400);
+  document.scrollingElement.scrollBy(0, 75);
+  assert_equals(document.scrollingElement.scrollTop, 500);
+  document.scrollingElement.scrollBy(0, 75);
+  assert_equals(document.scrollingElement.scrollTop, 600);
+  document.scrollingElement.scrollBy(0, 75);
+  assert_equals(document.scrollingElement.scrollTop, 700);
+
+  // The outer scroller should now have the 3 inner snap areas assigned to it.
+  outerscroller.style.setProperty("overflow", "scroll");
+
+  // The document should only snap to "#document-snap-area".
+  document.scrollingElement.scrollBy(0, 75);
+  assert_equals(document.scrollingElement.scrollTop, 400);
+
+  // The outer scroller should snap to the other snap areas.
+  outerscroller.scrollBy(0, 10);
+  assert_equals(outerscroller.scrollTop, 400);
+  outerscroller.scrollBy(0, 75);
+  assert_equals(outerscroller.scrollTop, 500);
+  outerscroller.scrollBy(0, 75);
+  assert_equals(outerscroller.scrollTop, 600);
+
+  // The middle scroller should now have the 2 inner snap areas assigned to it.
+  middlescroller.style.setProperty("overflow", "scroll");
+
+  // The outer scroller should only snap to "#outer-snap-area".
+  outerscroller.scrollBy(0, 75);
+  assert_equals(outerscroller.scrollTop, 400);
+
+  // The middle scroller has snap-type 'none' so it should not snap.
+  middlescroller.scrollBy(0, 10);
+  assert_equals(middlescroller.scrollTop, 10);
+
+  // The inner scroller should now have the innermost snap area assigned to it.
+  innerscroller.style.setProperty("overflow", "scroll");
+  innerscroller.scrollBy(0, 10);
+  assert_equals(innerscroller.scrollTop, 400);
+
+}, 'Making a a div scrollable should reassign the correct descendant snap areas\
+ to it');
+</script>
