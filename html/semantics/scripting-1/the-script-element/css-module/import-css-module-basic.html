@@ -1,0 +1,22 @@
+<!doctype html>
+
+<head>
+    <title>import-css-module-basic</title>
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+</head>
+
+<body>
+    <h1>import-css-module-basic</h1>
+    <script type="module">
+        import v from "./modules/basic.css"
+        document.adoptedStyleSheets = [v];
+        test(function () {
+            assert_equals(getComputedStyle(document.querySelector('#test')).backgroundColor, "rgb(255, 0, 0)", "CSS module should import correctly on top level document");
+        }, "Test basic CSS module import");
+    </script>
+
+<div id="test">
+    I am a test div.
+</div>
+</body>

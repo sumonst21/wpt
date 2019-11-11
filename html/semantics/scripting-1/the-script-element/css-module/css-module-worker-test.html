@@ -1,0 +1,18 @@
+<!doctype html>
+
+<head>
+    <title>import-css-module-worker</title>
+    <script src="/resources/testharness.js"></script>
+    <script src="/resources/testharnessreport.js"></script>
+</head>
+
+<body>
+    <h1>import-css-module-worker</h1>
+    <script>
+        async_test(function (test) {
+            const worker = new Worker("./modules/worker.js", { type: "module" });
+            worker.onmessage = test.step_func(() => { assert_unreached("A CSS Module within a web worker should not load.")});
+            worker.onerror = test.step_func_done();
+        }, "A CSS Module within a web worker should not load.");
+    </script>
+</body>
