@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<title>
+  When an element no longer captures snap positions (e.g., no longerscrollable),
+  then its currently captured snap areas must be reassigned.
+</title>
+<link rel="help" href="https://drafts.csswg.org/css-scroll-snap/#captures-snap-positions"/>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<style>
+div {
+  position: absolute;
+  margin: 0px;
+}
+
+html {
+  scroll-snap-type: y mandatory;
+}
+
+body {
+  margin: 0px;
+}
+
+#outer-scroller {
+  height: 600px;
+  width: 600px;
+  overflow: scroll;
+  scroll-snap-type: y mandatory;
+}
+
+#middle-scroller {
+  top: 100px;
+  height: 500px;
+  width: 500px;
+  overflow: scroll;
+  background-color: rgb(12, 61, 2);
+  scroll-snap-type: none;
+}
+
+#inner-scroller {
+  top: 200px;
+  height: 400px;
+  width: 400px;
+  overflow: scroll;
+  background-color: rgb(65, 139, 50);
+  scroll-snap-type: y mandatory;
+}
+
+.space {
+  width: 2000px;
+  height: 2000px;
+}
+
+#inner-snap-area {
+  top: 400px;
+  width: 200px;
+  height: 200px;
+  background-color: blue;
+  scroll-snap-align: start;
+}
+
+#document-snap-area {
+  top: 200px;
+  width: 200px;
+  height: 200px;
+  background-color: blue;
+  scroll-snap-align: start;
+}
+
+</style>
+<div class="space"></div>
+<div id="outer-scroller">
+  <div class="space"></div>
+  <div id="middle-scroller">
+    <div class="space"></div>
+    <div id="inner-scroller">
+        <div class="space"></div>
+        <div id="inner-snap-area"></div>
+    </div>
+  </div>
+</div>
+<div id="document-snap-area"></div>
+<script>
+
+// This tests that making a snap container no longer scrollable will reassign
+// its snap areas to the next scrollable ancestor, per spec [1].
+// [1] https://drafts.csswg.org/css-scroll-snap/#captures-snap-positions
+test(() => {
+  const innerscroller = document.getElementById("inner-scroller");
+  const middlescroller = document.getElementById("middle-scroller");
+  const outerscroller = document.getElementById("outer-scroller");
+
+  // Middle and outer scrollers don't snap.
+  outerscroller.scrollBy(0, 10);
+  middlescroller.scrollBy(0, 10);
+  assert_equals(innerscroller.scrollTop, 0);
+  assert_equals(middlescroller.scrollTop, 10);
+  assert_equals(outerscroller.scrollTop, 10);
+
+  // Inner scroller snaps.
+  innerscroller.scrollBy(0, 10);
+  assert_equals(innerscroller.scrollTop, 400);
+  assert_equals(middlescroller.scrollTop, 10);
+  assert_equals(outerscroller.scrollTop, 10);
+
+  // Inner scroller is no longer a scroll container.
+  innerscroller.style.setProperty("overflow", "visible");
+  assert_equals(innerscroller.scrollTop, 0);
+  assert_equals(middlescroller.scrollTop, 10);
+  assert_equals(outerscroller.scrollTop, 10);
+
+  // The new snap container is the middle scroller, which has snap-type 'none'.
+  // Per spec, the scroll container should capture snap positions even if it has
+  // snap-type 'none'.
+  // Scrolling either the outer or middler scroller should not snap.
+  outerscroller.scrollBy(0, 10);
+  middlescroller.scrollBy(0, 10);
+  assert_equals(innerscroller.scrollTop, 0);
+  assert_equals(middlescroller.scrollTop, 20);
+  assert_equals(outerscroller.scrollTop, 20);
+
+  // The scroll container should now be at the document level.
+  middlescroller.style.setProperty("overflow", "visible");
+  outerscroller.style.setProperty("overflow", "visible");
+  document.scrollingElement.scrollBy(0, 10);
+  assert_equals(innerscroller.scrollTop, 0);
+  assert_equals(middlescroller.scrollTop, 0);
+  assert_equals(outerscroller.scrollTop, 0);
+
+  // Check that the existing snap area did not get removed when reassigning
+  // the inner snap area.
+  assert_equals(document.scrollingElement.scrollTop, 200);
+
+  // Check that the inner snap area got reassigned to the document.
+  document.scrollingElement.scrollBy(0, 300);
+  assert_equals(document.scrollingElement.scrollTop, 700);
+
+}, 'Making a snap container not scrollable should promote the next scrollable\
+ ancestor to the new snap container.');
+</script>
