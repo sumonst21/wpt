@@ -26,7 +26,8 @@
 
  - function receive(): the main/only function that can be mocked.
  - function expect(): the main/only function that enables us to mock it.
- - enum State {kSuccess, kTimeout}: allows you to mock success/failures.
+ - enum State {kSuccess, kNavigatedAway, kCancelledByUser}:
+     allows you to mock success/failures.
 
   -->
 <script src="./resources/helper.js"></script>
@@ -73,7 +74,7 @@ promise_test(async t => {
 promise_test(async t => {
   await expect(receive).andReturn(() => {
       return Promise.resolve({
-        status: Status.kCancelled,
+        status: Status.kCancelledByUser,
       });
   });
   await expect(receive).andReturn(() => {
@@ -101,7 +102,7 @@ promise_test(async t => {
 promise_test(async t => {
   await expect(receive).andReturn(() => {
       return Promise.resolve({
-        status: Status.kCancelled,
+        status: Status.kCancelledByUser,
       });
   });
 

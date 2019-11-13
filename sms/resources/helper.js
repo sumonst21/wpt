@@ -36,8 +36,8 @@ const loadChromiumResources = async () => {
   }));
 
   Status.kSuccess = blink.mojom.SmsStatus.kSuccess;
-  Status.kTimeout = blink.mojom.SmsStatus.kTimeout;
-  Status.kCancelled = blink.mojom.SmsStatus.kCancelled;
+  Status.kNavigatedAway = blink.mojom.SmsStatus.kNavigatedAway;
+  Status.kCancelledByUser = blink.mojom.SmsStatus.kCancelledByUser;
 };
 
 const Status = {};
